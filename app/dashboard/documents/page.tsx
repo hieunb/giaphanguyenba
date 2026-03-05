@@ -138,13 +138,3 @@ export default async function DocumentsPage() {
     </main>
   );
 }
-            <FeatureItem
-              icon={<Video className="size-5" />}
-              title="Video sự kiện"
-              description="Lưu trữ video lễ giỗ, họp họ"
-            />
-            <FeatureItem
-              icon={<FolderOpen className="size-5" />}
-              title="Tìm kiếm & Phân loại"
-              description="Tag hóa, full-text search"
-            />
