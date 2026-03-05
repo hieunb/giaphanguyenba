@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
+import { getSupabase } from '@/utils/supabase/queries';
 import { revalidatePath } from 'next/cache';
 
 export interface Fund {
@@ -27,7 +27,7 @@ export interface FundTransaction {
 }
 
 export async function getFunds() {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('funds')
     .select('*')
@@ -42,7 +42,7 @@ export async function getFunds() {
 }
 
 export async function getFundTransactions(fundId?: string) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   let query = supabase
     .from('fund_transactions')
     .select(`
@@ -68,7 +68,7 @@ export async function getFundTransactions(fundId?: string) {
 }
 
 export async function createFundTransaction(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -102,7 +102,7 @@ export async function createFundTransaction(formData: FormData) {
 }
 
 export async function updateFundTransaction(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const transaction = {
     amount: parseFloat(formData.get('amount') as string),
@@ -129,7 +129,7 @@ export async function updateFundTransaction(id: string, formData: FormData) {
 }
 
 export async function deleteFundTransaction(id: string) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const { error } = await supabase
     .from('fund_transactions')

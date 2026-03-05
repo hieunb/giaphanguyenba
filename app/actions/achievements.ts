@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
+import { getSupabase } from '@/utils/supabase/queries';
 import { revalidatePath } from 'next/cache';
 
 export interface Achievement {
@@ -21,7 +21,7 @@ export interface Achievement {
 }
 
 export async function getAchievements() {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('achievements')
     .select(`
@@ -40,7 +40,7 @@ export async function getAchievements() {
 }
 
 export async function createAchievement(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -76,7 +76,7 @@ export async function createAchievement(formData: FormData) {
 }
 
 export async function updateAchievement(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const achievement = {
     title: formData.get('title') as string,
@@ -107,7 +107,7 @@ export async function updateAchievement(id: string, formData: FormData) {
 }
 
 export async function deleteAchievement(id: string) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const { error } = await supabase
     .from('achievements')
@@ -124,7 +124,7 @@ export async function deleteAchievement(id: string) {
 }
 
 export async function toggleFeatured(id: string, isFeatured: boolean) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const { data, error } = await supabase
     .from('achievements')

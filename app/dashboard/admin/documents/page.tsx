@@ -93,12 +93,3 @@ export default async function AdminDocumentsPage() {
     </main>
   );
 }
-    <div className="flex items-start gap-3 p-4 rounded-xl bg-white/80 border border-stone-100">
-      <div className="size-2 rounded-full bg-purple-500 mt-2 shrink-0"></div>
-      <div>
-        <h4 className="font-semibold text-stone-800 mb-1">{title}</h4>
-        <p className="text-sm text-stone-600">{description}</p>
-      </div>
-    </div>
-  );
-}

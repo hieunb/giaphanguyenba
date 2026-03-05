@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
+import { getSupabase } from '@/utils/supabase/queries';
 import { revalidatePath } from 'next/cache';
 
 export interface Event {
@@ -21,7 +21,7 @@ export interface Event {
 }
 
 export async function getEvents() {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('events')
     .select(`
@@ -39,7 +39,7 @@ export async function getEvents() {
 }
 
 export async function createEvent(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -77,7 +77,7 @@ export async function createEvent(formData: FormData) {
 }
 
 export async function updateEvent(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const event = {
     title: formData.get('title') as string,
@@ -111,7 +111,7 @@ export async function updateEvent(id: string, formData: FormData) {
 }
 
 export async function deleteEvent(id: string) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const { error } = await supabase
     .from('events')

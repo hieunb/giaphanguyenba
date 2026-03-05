@@ -256,3 +256,22 @@ export async function importData(
     },
   };
 }
+
+/**
+ * Get all members for dropdown selectors in admin forms
+ */
+export async function getAllMembers() {
+  const supabase = await getSupabase();
+  
+  const { data, error } = await supabase
+    .from("persons")
+    .select("id, full_name, birth_year")
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching members:", error);
+    return [];
+  }
+
+  return data;
+}

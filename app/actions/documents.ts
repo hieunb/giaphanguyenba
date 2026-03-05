@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
+import { getSupabase } from '@/utils/supabase/queries';
 import { revalidatePath } from 'next/cache';
 
 export interface DocumentCategory {
@@ -30,7 +30,7 @@ export interface Document {
 }
 
 export async function getDocumentCategories() {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('document_categories')
     .select('*')
@@ -45,7 +45,7 @@ export async function getDocumentCategories() {
 }
 
 export async function getDocuments(categoryId?: string) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   let query = supabase
     .from('documents')
     .select(`
@@ -70,7 +70,7 @@ export async function getDocuments(categoryId?: string) {
 }
 
 export async function createDocument(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -106,7 +106,7 @@ export async function createDocument(formData: FormData) {
 }
 
 export async function updateDocument(id: string, formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const document = {
     title: formData.get('title') as string,
@@ -136,7 +136,7 @@ export async function updateDocument(id: string, formData: FormData) {
 }
 
 export async function deleteDocument(id: string) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const { error } = await supabase
     .from('documents')
@@ -154,7 +154,7 @@ export async function deleteDocument(id: string) {
 }
 
 export async function createCategory(formData: FormData) {
-  const supabase = await createClient();
+  const supabase = await getSupabase();
 
   const category = {
     name: formData.get('name') as string,
