@@ -43,3 +43,13 @@ next-env.d.ts
 .agents/
 .agent/
 skills-lock.json
+# docker
+logs/
+*.log
+.env.backup.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

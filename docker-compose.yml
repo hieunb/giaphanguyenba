@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Next.js Application
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: giapha-os-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Site Configuration
+      - SITE_NAME=${SITE_NAME:-Gia Phả OS}
+      - EXAMPLE_EMAIL=${EXAMPLE_EMAIL:-}
+      - EXAMPLE_PASSWORD=${EXAMPLE_PASSWORD:-}
+      - DEMO_DOMAIN=${DEMO_DOMAIN:-localhost:3000}
+      
+      # Supabase Configuration (REQUIRED)
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY}
+      
+      # Next.js Configuration
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    env_file:
+      - .env
+    volumes:
+      # Mount logs (optional)
+      - ./logs:/app/logs
+    networks:
+      - giapha-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.giapha-os.description=Gia Phả OS - Family Tree Management System"
+      - "com.giapha-os.version=1.0.0"
+
+networks:
+  giapha-network:
+    driver: bridge
+
+# ==========================================
+# Optional: Volume for persistent data
+# ==========================================
+volumes:
+  logs:
+    driver: local

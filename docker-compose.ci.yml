@@ -1,0 +1,21 @@
+# ==========================================
+# Docker Compose Override for CI/CD
+# Used in automated testing
+# ==========================================
+
+version: '3.8'
+
+services:
+  app:
+    environment:
+      # Override for testing
+      - NODE_ENV=test
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://test.supabase.co}
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY:-test-key}
+    
+    # No auto-restart in CI
+    restart: "no"
+    
+    # Disable health check in CI
+    healthcheck:
+      disable: true

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Development Environment
+  # ==========================================
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: giapha-os-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - SITE_NAME=${SITE_NAME:-Gia Phả OS Dev}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY}
+    env_file:
+      - .env.local
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - giapha-network
+    command: npm run dev
+    stdin_open: true
+    tty: true
+
+networks:
+  giapha-network:
+    driver: bridge

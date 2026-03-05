@@ -4,14 +4,21 @@ import { getIsAdmin, getSupabase } from "@/utils/supabase/queries";
 import {
   ArrowRight,
   BarChart2,
+  BookOpen,
   Cake,
+  CalendarClock,
   CalendarDays,
   Database,
+  FileText,
   Flower2,
   GitMerge,
   Network,
+  PiggyBank,
+  Settings,
   Star,
+  Trophy,
   Users,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -70,15 +77,15 @@ export default async function DashboardLaunchpad() {
       borderColor: "border-amber-200/60",
       hoverColor: "hover:border-amber-400 hover:shadow-amber-100",
     },
-    // {
-    //   title: "Sự kiện",
-    //   description: "Quản lý ngày giỗ, họp họ và các dịp quan trọng",
-    //   icon: <CalendarClock className="size-8 text-emerald-600" />,
-    //   href: "/dashboard/events",
-    //   bgColor: "bg-emerald-50",
-    //   borderColor: "border-emerald-200/60",
-    //   hoverColor: "hover:border-emerald-400 hover:shadow-emerald-100",
-    // },
+    {
+      title: "Lịch sự kiện",
+      description: "Quản lý ngày giỗ, họp họ và các dịp quan trọng",
+      icon: <CalendarClock className="size-8 text-emerald-600" />,
+      href: "/dashboard/events",
+      bgColor: "bg-emerald-50",
+      borderColor: "border-emerald-200/60",
+      hoverColor: "hover:border-emerald-400 hover:shadow-emerald-100",
+    },
     {
       title: "Tra cứu danh xưng",
       description: "Hệ thống gọi tên họ hàng chuẩn xác",
@@ -97,15 +104,36 @@ export default async function DashboardLaunchpad() {
       borderColor: "border-purple-200/60",
       hoverColor: "hover:border-purple-400 hover:shadow-purple-100",
     },
-    // {
-    //   title: "Giới thiệu & Liên hệ",
-    //   description: "Thông tin về ứng dụng và đội ngũ phát triển",
-    //   icon: <Info className="size-8 text-stone-600" />,
-    //   href: "/about",
-    //   bgColor: "bg-stone-50",
-    //   borderColor: "border-stone-200/60",
-    //   hoverColor: "hover:border-stone-400 hover:shadow-stone-100",
-    // },
+    {
+      title: "Vinh danh thành tích",
+      description: "Bảng vàng thành tích của con cháu dòng họ",
+      icon: <Trophy className="size-8 text-yellow-600" />,
+      href: "/dashboard/achievements",
+      bgColor: "bg-yellow-50",
+      borderColor: "border-yellow-200/60",
+      hoverColor: "hover:border-yellow-400 hover:shadow-yellow-100",
+      badge: "Sắp ra mắt",
+    },
+    {
+      title: "Quỹ Họ & Khuyến học",
+      description: "Quản lý tài chính và học bổng minh bạch",
+      icon: <PiggyBank className="size-8 text-green-600" />,
+      href: "/dashboard/funds",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200/60",
+      hoverColor: "hover:border-green-400 hover:shadow-green-100",
+      badge: "Sắp ra mắt",
+    },
+    {
+      title: "Kho tài liệu",
+      description: "Thư viện số lưu trữ di sản dòng họ",
+      icon: <BookOpen className="size-8 text-indigo-600" />,
+      href: "/dashboard/documents",
+      bgColor: "bg-indigo-50",
+      borderColor: "border-indigo-200/60",
+      hoverColor: "hover:border-indigo-400 hover:shadow-indigo-100",
+      badge: "Sắp ra mắt",
+    },
   ];
 
   const adminFeatures = [
@@ -135,6 +163,46 @@ export default async function DashboardLaunchpad() {
       bgColor: "bg-teal-50",
       borderColor: "border-teal-200/60",
       hoverColor: "hover:border-teal-400 hover:shadow-teal-100",
+    },
+    {
+      title: "Quản lý Thành tích",
+      description: "Thêm, sửa, xóa và phê duyệt thành tích",
+      icon: <Trophy className="size-8 text-amber-600" />,
+      href: "/dashboard/admin/achievements",
+      bgColor: "bg-amber-50",
+      borderColor: "border-amber-200/60",
+      hoverColor: "hover:border-amber-400 hover:shadow-amber-100",
+      badge: "Mới",
+    },
+    {
+      title: "Quản lý Quỹ",
+      description: "Quản lý giao dịch và báo cáo tài chính",
+      icon: <Wallet className="size-8 text-emerald-600" />,
+      href: "/dashboard/admin/funds",
+      bgColor: "bg-emerald-50",
+      borderColor: "border-emerald-200/60",
+      hoverColor: "hover:border-emerald-400 hover:shadow-emerald-100",
+      badge: "Mới",
+    },
+    {
+      title: "Quản lý Sự kiện",
+      description: "Tạo và quản lý lịch sự kiện dòng họ",
+      icon: <CalendarClock className="size-8 text-blue-600" />,
+      href: "/dashboard/admin/events",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200/60",
+      hoverColor: "hover:border-blue-400 hover:shadow-blue-100",
+      badge: "Mới",
+    },
+    {
+      title: "Quản lý Tài liệu",
+      description: "Upload và phân loại tài liệu dòng họ",
+      icon: <FileText className="size-8 text-purple-600" />,
+      href: "/dashboard/admin/documents",
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-200/60",
+      hoverColor: "hover:border-purple-400 hover:shadow-purple-100",
+      badge: "Mới",
     },
   ];
 
@@ -257,8 +325,17 @@ export default async function DashboardLaunchpad() {
               <Link
                 key={feat.href}
                 href={feat.href}
-                className={`group flex flex-col p-6 rounded-2xl bg-white border ${feat.borderColor} ${feat.hoverColor} transition-all duration-300 hover:-translate-y-1 shadow-sm`}
+                className={`group relative flex flex-col p-6 rounded-2xl bg-white border ${feat.borderColor} ${feat.hoverColor} transition-all duration-300 hover:-translate-y-1 shadow-sm`}
               >
+                {/* Badge "Sắp ra mắt" */}
+                {feat.badge && (
+                  <div className="absolute top-3 right-3">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold border border-amber-200">
+                      ✨ {feat.badge}
+                    </span>
+                  </div>
+                )}
+                
                 <div
                   className={`size-14 rounded-xl flex items-center justify-center mb-5 ${feat.bgColor} transition-colors duration-300 group-hover:bg-white border border-transparent group-hover:${feat.borderColor}`}
                 >
@@ -286,8 +363,17 @@ export default async function DashboardLaunchpad() {
                 <Link
                   key={feat.href}
                   href={feat.href}
-                  className={`group flex flex-col p-6 rounded-2xl bg-white border ${feat.borderColor} ${feat.hoverColor} transition-all duration-300 hover:-translate-y-1 shadow-sm`}
+                  className={`group relative flex flex-col p-6 rounded-2xl bg-white border ${feat.borderColor} ${feat.hoverColor} transition-all duration-300 hover:-translate-y-1 shadow-sm`}
                 >
+                  {/* Badge "Mới" */}
+                  {feat.badge && (
+                    <div className="absolute top-3 right-3">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200">
+                        ✨ {feat.badge}
+                      </span>
+                    </div>
+                  )}
+                  
                   <div
                     className={`size-14 rounded-xl flex items-center justify-center mb-5 ${feat.bgColor} transition-colors duration-300 group-hover:bg-white border border-transparent group-hover:${feat.borderColor}`}
                   >
