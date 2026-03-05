@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, X } from 'lucide-react';
 import { createAchievement } from '@/app/actions/achievements';
 
@@ -10,6 +11,7 @@ interface Member {
 }
 
 export default function AchievementForm({ members }: { members: Member[] }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,6 +27,7 @@ export default function AchievementForm({ members }: { members: Member[] }) {
     } else {
       setIsOpen(false);
       e.currentTarget.reset();
+      router.refresh(); // Refresh to show new data
     }
 
     setIsSubmitting(false);

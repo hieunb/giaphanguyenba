@@ -1,26 +1,93 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, X, Upload, Link as LinkIcon } from 'lucide-react';
 import { createDocument, createCategory } from '@/app/actions/documents';
+import { createClient } from '@/utils/supabase/client';
 
 export default function DocumentForm({ categories }: any) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const supabase = createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `documents/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
-    const result = await createDocument(formData);
+    try {
+      const formData = new FormData(e.currentTarget);
 
-    if (result.error) {
-      alert('Lỗi: ' + result.error);
-    } else {
-      setIsOpen(false);
-      e.currentTarget.reset();
+      // If upload mode and file selected, upload first
+      if (uploadMode === 'file' && selectedFile) {
+        setUploadProgress(10);
+        const fileUrl = await uploadFile(selectedFile);
+        
+        if (!fileUrl) {
+          alert('Lỗi: Không thể upload file. Vui lòng thử lại.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        setUploadProgress(80);
+        
+        // Set file metadata
+        formData.set('file_url', fileUrl);
+        formData.set('file_type', selectedFile.type);
+        formData.set('file_size', selectedFile.size.toString());
+      }
+
+      setUploadProgress(90);
+      const result = await createDocument(formData);
+
+      if (result.error) {
+        alert('Lỗi: ' + result.error);
+      } else {
+        setIsOpen(false);
+        setSelectedFile(null);
+        setUploadProgress(0);
+        e.currentTarget.reset();
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert('Lỗi: ' + (error as Error).message);
     }
 
     setIsSubmitting(false);
@@ -121,37 +188,88 @@ export default function DocumentForm({ categories }: any) {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">URL file *</label>
-            <input
-              type="url"
-              name="file_url"
-              required
-              placeholder="https://example.com/document.pdf"
-              className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
+          {/* Upload Mode Toggle */}
+          <div className="flex gap-2 p-1 bg-stone-100 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setUploadMode('file')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                uploadMode === 'file'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-800'
+              }`}
+            >
+              <Upload className="size-4" />
+              Upload File
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadMode('url')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                uploadMode === 'url'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-800'
+              }`}
+            >
+              <LinkIcon className="size-4" />
+              Nhập URL
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* File Upload */}
+          {uploadMode === 'file' ? (
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">Loại file</label>
+              <label className="block text-sm font-medium text-stone-700 mb-2">Chọn file *</label>
               <input
-                type="text"
-                name="file_type"
-                placeholder="VD: application/pdf"
+                type="file"
+                onChange={handleFileChange}
+                required
+                className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
+              />
+              {selectedFile && (
+                <div className="mt-2 text-sm text-stone-600">
+                  <p>📄 {selectedFile.name}</p>
+                  <p>📊 {(selectedFile.size / 1024).toFixed(2)} KB</p>
+                  <p>🏷️ {selectedFile.type || 'Unknown type'}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">URL file *</label>
+              <input
+                type="url"
+                name="file_url"
+                required
+                placeholder="https://example.com/document.pdf"
                 className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">Kích thước (bytes)</label>
-              <input
-                type="number"
-                name="file_size"
-                placeholder="1048576"
-                className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
+          )}
+
+          {/* File Type and Size (only for URL mode) */}
+          {uploadMode === 'url' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Loại file</label>
+                <input
+                  type="text"
+                  name="file_type"
+                  placeholder="VD: application/pdf"
+                  className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Kích thước (bytes)</label>
+                <input
+                  type="number"
+                  name="file_size"
+                  placeholder="1048576"
+                  className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-2">URL thumbnail</label>
@@ -187,13 +305,31 @@ export default function DocumentForm({ categories }: any) {
             </label>
           </div>
 
+          {/* Upload Progress */}
+          {isSubmitting && uploadProgress > 0 && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-stone-600">
+                <span>Đang tải lên...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-stone-200 rounded-full h-2">
+                <div 
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? 'Đang lưu...' : 'Lưu tài liệu'}
+              {isSubmitting 
+                ? (uploadProgress > 0 ? `Đang upload ${uploadProgress}%...` : 'Đang lưu...') 
+                : 'Lưu tài liệu'}
             </button>
             <button
               type="button"

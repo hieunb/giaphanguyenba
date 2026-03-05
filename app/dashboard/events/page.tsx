@@ -10,7 +10,7 @@ export const metadata = {
 export default async function EventsPage() {
   const supabase = await getSupabase();
 
-  const [personsRes, customEventsRes] = await Promise.all([
+  const [personsRes, customEventsRes, eventsRes] = await Promise.all([
     supabase
       .from("persons")
       .select(
@@ -19,10 +19,28 @@ export default async function EventsPage() {
     supabase
       .from("custom_events")
       .select("id, name, content, event_date, location, created_by"),
+    supabase
+      .from("events")
+      .select("id, title, description, start_date, location")
+      .order('start_date', { ascending: true }),
   ]);
 
   const persons = personsRes.data || [];
   const customEvents = customEventsRes.data || [];
+  const events = eventsRes.data || [];
+
+  // Convert admin events to custom events format for compatibility
+  const adminEventsAsCustom = events.map((e: any) => ({
+    id: e.id,
+    name: e.title,
+    content: e.description,
+    event_date: e.start_date.split('T')[0], // Convert datetime to date
+    location: e.location,
+    created_by: null, // Admin events don't have individual creators
+  }));
+
+  // Merge both types of events
+  const allCustomEvents = [...customEvents, ...adminEventsAsCustom];
 
   return (
     <DashboardProvider>
@@ -37,7 +55,7 @@ export default async function EventsPage() {
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1">
           <EventsList
             persons={persons ?? []}
-            customEvents={customEvents ?? []}
+            customEvents={allCustomEvents ?? []}
           />
         </main>
       </div>
