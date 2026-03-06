@@ -10,8 +10,8 @@ import TextAlign from '@tiptap/extension-text-align';
 import FontFamily from '@tiptap/extension-font-family';
 import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
 import { useEffect } from 'react';
 import {
   Bold,
@@ -26,10 +26,7 @@ import {
   ListOrdered,
   Type,
   Eraser,
-  Table as TableIcon,
-  Plus,
-  Minus,
-  Trash2,
+  Table2,
 } from 'lucide-react';
 
 interface Props {
@@ -61,8 +58,8 @@ export default function RichTextEditor({ value = '', onChange, placeholder }: Pr
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Table.configure({ resizable: false }),
       TableRow,
-      TableCell,
       TableHeader,
+      TableCell,
     ],
     content: value,
     onUpdate: ({ editor }) => {
@@ -257,30 +254,42 @@ export default function RichTextEditor({ value = '', onChange, placeholder }: Pr
         {/* Table */}
         <Btn
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-          active={false}
           title="Chèn bảng 3×3"
         >
-          <TableIcon size={14} />
+          <Table2 size={14} />
         </Btn>
-
-        {/* Table context buttons — only visible when cursor is inside a table */}
         {editor.isActive('table') && (
           <>
-            <Btn onClick={() => editor.chain().focus().addRowAfter().run()} active={false} title="Thêm hàng bên dưới">
-              <span className="text-[10px] font-bold">H</span><Plus size={10} />
-            </Btn>
-            <Btn onClick={() => editor.chain().focus().deleteRow().run()} active={false} title="Xóa hàng hiện tại">
-              <span className="text-[10px] font-bold">H</span><Minus size={10} />
-            </Btn>
-            <Btn onClick={() => editor.chain().focus().addColumnAfter().run()} active={false} title="Thêm cột bên phải">
-              <span className="text-[10px] font-bold">C</span><Plus size={10} />
-            </Btn>
-            <Btn onClick={() => editor.chain().focus().deleteColumn().run()} active={false} title="Xóa cột hiện tại">
-              <span className="text-[10px] font-bold">C</span><Minus size={10} />
-            </Btn>
-            <Btn onClick={() => editor.chain().focus().deleteTable().run()} active={false} title="Xóa bảng">
-              <Trash2 size={14} className="text-red-500" />
-            </Btn>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              title="Thêm hàng bên dưới"
+              className="px-1.5 py-1 text-[11px] font-medium rounded text-gray-600 hover:bg-gray-100"
+            >+↓</button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              title="Xóa hàng"
+              className="px-1.5 py-1 text-[11px] font-medium rounded text-gray-600 hover:bg-gray-100"
+            >−↑</button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              title="Thêm cột bên phải"
+              className="px-1.5 py-1 text-[11px] font-medium rounded text-gray-600 hover:bg-gray-100"
+            >+→</button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              title="Xóa cột"
+              className="px-1.5 py-1 text-[11px] font-medium rounded text-gray-600 hover:bg-gray-100"
+            >−←</button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              title="Xóa bảng"
+              className="px-1.5 py-1 text-[11px] font-semibold rounded text-red-600 hover:bg-red-50"
+            >×bảng</button>
           </>
         )}
       </div>

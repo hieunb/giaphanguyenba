@@ -74,7 +74,7 @@ export default async function ChroniclePage({ params }: Props) {
         {/* Content */}
         {article.content ? (
           <div
-            className="chronicle-content max-w-none text-gray-800 leading-relaxed"
+            className="chronicle-content max-w-none"
             // Content is admin-managed (trusted source)
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
