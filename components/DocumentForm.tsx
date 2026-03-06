@@ -22,29 +22,40 @@ export default function DocumentForm({ categories }: any) {
   };
 
   const uploadFile = async (file: File): Promise<string | null> => {
-    const supabase = createClient();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `documents/${fileName}`;
+    try {
+      const supabase = createClient();
+      
+      // Validate client
+      if (!supabase || !supabase.storage) {
+        throw new Error('Supabase client not initialized properly');
+      }
 
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `documents/${fileName}`;
 
-    if (error) {
-      console.error('Upload error:', error);
-      return null;
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Upload error:', error);
+        throw new Error(error.message || 'Upload failed');
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload file error:', error);
+      throw error;
     }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

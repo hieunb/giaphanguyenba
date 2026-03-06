@@ -19,6 +19,12 @@ export const createClient = () => {
           error: new Error("Missing Supabase configuration"),
         }),
       },
+      storage: {
+        from: () => ({
+          upload: async () => ({ data: null, error: new Error("Missing Supabase configuration") }),
+          getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        }),
+      },
     } as unknown as SupabaseClient;
   }
   return createBrowserClient(supabaseUrl, supabaseKey);
