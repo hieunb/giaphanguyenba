@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Plus, X, Upload, Link as LinkIcon, Save } from 'lucide-react';
 import { createChronicle, updateChronicle, Chronicle } from '@/app/actions/chronicles';
 import { createClient } from '@/utils/supabase/client';
+
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), { ssr: false });
 
 interface ChronicleFormProps {
   editChronicle?: Chronicle | null;
@@ -39,6 +42,7 @@ export default function ChronicleForm({ editChronicle, onClose }: ChronicleFormP
   );
   const [slugValue, setSlugValue] = useState(editChronicle?.slug || '');
   const [titleValue, setTitleValue] = useState(editChronicle?.title || '');
+  const [contentHtml, setContentHtml] = useState(editChronicle?.content || '');
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -92,6 +96,9 @@ export default function ChronicleForm({ editChronicle, onClose }: ChronicleFormP
         formData.set('cover_image_url', urlVal || '');
       }
 
+      // Inject rich text editor content into FormData
+      formData.set('content', contentHtml);
+
       let result;
       if (isEdit && editChronicle) {
         result = await updateChronicle(editChronicle.id, formData);
@@ -106,6 +113,7 @@ export default function ChronicleForm({ editChronicle, onClose }: ChronicleFormP
           setIsOpen(false);
           setTitleValue('');
           setSlugValue('');
+          setContentHtml('');
           setSelectedImage(null);
           setImagePreview('');
           form.reset();
@@ -169,12 +177,10 @@ export default function ChronicleForm({ editChronicle, onClose }: ChronicleFormP
       {/* Content */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung</label>
-        <textarea
-          name="content"
-          defaultValue={editChronicle?.content || ''}
-          rows={10}
-          placeholder="Viết nội dung bài gia phả ký... (hỗ trợ HTML)"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y font-mono text-sm"
+        <RichTextEditor
+          value={contentHtml}
+          onChange={setContentHtml}
+          placeholder="Viết nội dung bài gia phả ký..."
         />
       </div>
 

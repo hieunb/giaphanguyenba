@@ -1,6 +1,7 @@
 -- ============================================================
 -- Gia phả ký (Chronicles) - Setup script
 -- Run this in Supabase SQL editor
+-- Safe to re-run (idempotent)
 -- ============================================================
 
 -- 1. Chronicles table
@@ -17,6 +18,24 @@ CREATE TABLE IF NOT EXISTS public.chronicles (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 1b. Add missing columns to existing table (safe for re-runs)
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS excerpt TEXT;
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.chronicles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Add CHECK constraint if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chronicles_status_check') THEN
+    ALTER TABLE public.chronicles
+      ADD CONSTRAINT chronicles_status_check CHECK (status IN ('draft', 'published'));
+  END IF;
+END $$;
 
 -- 2. Index for slug lookups
 CREATE INDEX IF NOT EXISTS idx_chronicles_slug ON public.chronicles(slug);
@@ -104,3 +123,6 @@ CREATE POLICY "Allow authenticated delete chronicles images"
   ON storage.objects FOR DELETE
   TO authenticated
   USING (bucket_id = 'chronicles');
+
+-- 7. Reload PostgREST schema cache (fixes "column not found in schema cache" errors)
+NOTIFY pgrst, 'reload schema';

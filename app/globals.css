@@ -54,3 +54,31 @@ select {
 .title {
   @apply text-2xl sm:text-3xl font-serif font-bold text-stone-800;
 }
+
+/* ── TipTap Rich Text Editor ─────────────────────────────────────── */
+.tiptap-editor-wrapper .ProseMirror {
+  min-height: 260px;
+  padding: 0.75rem;
+  outline: none;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #1c1917;
+}
+.tiptap-editor-wrapper .ProseMirror h1 { font-size: 1.75rem; font-weight: 700; margin: 0.8rem 0 0.4rem; }
+.tiptap-editor-wrapper .ProseMirror h2 { font-size: 1.35rem; font-weight: 600; margin: 0.6rem 0 0.35rem; }
+.tiptap-editor-wrapper .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0 0.3rem; }
+.tiptap-editor-wrapper .ProseMirror p { margin-bottom: 0.5rem; }
+.tiptap-editor-wrapper .ProseMirror ul { list-style: disc; padding-left: 1.4rem; margin-bottom: 0.5rem; }
+.tiptap-editor-wrapper .ProseMirror ol { list-style: decimal; padding-left: 1.4rem; margin-bottom: 0.5rem; }
+.tiptap-editor-wrapper .ProseMirror li { margin-bottom: 0.15rem; }
+.tiptap-editor-wrapper .ProseMirror strong { font-weight: 700; }
+.tiptap-editor-wrapper .ProseMirror em { font-style: italic; }
+.tiptap-editor-wrapper .ProseMirror u { text-decoration: underline; }
+.tiptap-editor-wrapper .ProseMirror s { text-decoration: line-through; }
+.tiptap-editor-wrapper .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
