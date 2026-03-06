@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import mammoth from 'mammoth';
@@ -9,6 +8,23 @@ export const maxDuration = 60;
 
 const CHUNK_SIZE = 400;   // words per chunk
 const CHUNK_OVERLAP = 40; // words overlap between chunks
+
+async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: { parts: [{ text }] } }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Gemini embedding error ${res.status}: ${err?.error?.message || res.statusText}`);
+  }
+  const data = await res.json();
+  return data.embedding.values as number[];
+}
 
 function chunkText(text: string): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -77,21 +93,15 @@ export async function POST(req: NextRequest) {
     // Delete old chunks for this document
     await supabase.from('document_chunks').delete().eq('document_id', documentId);
 
-    // Generate embeddings with Gemini
-    const genAI = new GoogleGenerativeAI(geminiKey);
-    const embModel = genAI.getGenerativeModel(
-      { model: 'text-embedding-004' },
-      { apiVersion: 'v1' }
-    );
-
+    // Generate embeddings with Gemini (direct REST)
     const rows: Array<{ document_id: string; content: string; embedding: number[]; chunk_index: number }> = [];
 
     for (let i = 0; i < chunks.length; i++) {
-      const { embedding } = await embModel.embedContent(chunks[i]);
+      const values = await getEmbedding(chunks[i], geminiKey);
       rows.push({
         document_id: documentId,
         content: chunks[i],
-        embedding: embedding.values,
+        embedding: values,
         chunk_index: i,
       });
       // Small delay to respect Gemini rate limits (100 RPM free tier)

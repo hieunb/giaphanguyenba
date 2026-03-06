@@ -6,6 +6,23 @@ import { cookies } from 'next/headers';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
+async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: { parts: [{ text }] } }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Gemini embedding error ${res.status}: ${err?.error?.message || res.statusText}`);
+  }
+  const data = await res.json();
+  return data.embedding.values as number[];
+}
+
 const SYSTEM_PROMPT = `Bạn là trợ lý AI chuyên về gia phả và lịch sử dòng họ.
 Nhiệm vụ của bạn là trả lời câu hỏi của người dùng DỰA TRÊN các đoạn văn bản được cung cấp từ tài liệu gia phả.
 
@@ -42,16 +59,12 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(geminiKey);
 
-    // 1. Embed the question
-    const embModel = genAI.getGenerativeModel(
-      { model: 'text-embedding-004' },
-      { apiVersion: 'v1' }
-    );
-    const { embedding } = await embModel.embedContent(question);
+    // 1. Embed the question (direct REST)
+    const embValues = await getEmbedding(question, geminiKey);
 
     // 2. Vector search in Supabase
     const { data: chunks, error: searchError } = await supabase.rpc('match_document_chunks', {
-      query_embedding: embedding.values,
+      query_embedding: embValues,
       match_threshold: 0.4,
       match_count: 6,
     });
