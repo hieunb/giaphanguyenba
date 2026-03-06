@@ -1,30 +1,31 @@
 -- ============================================================
--- Migration: Upgrade AI embeddings from 768 → 3072 dimensions
--- Model: gemini-embedding-001 (replaces text-embedding-004)
+-- Migration: Fix AI embeddings - use gemini-embedding-001 with 768 dims
+-- Model: gemini-embedding-001 with outputDimensionality=768
 -- Run this in Supabase SQL editor BEFORE re-processing documents
 -- ============================================================
 
--- 1. Drop old index (must drop before altering column)
+-- 1. Drop old index
 DROP INDEX IF EXISTS idx_document_chunks_embedding;
 
--- 2. Drop old function (depends on vector(768))
+-- 2. Drop old functions (any dimension variant)
+DROP FUNCTION IF EXISTS match_document_chunks(vector(3072), float, int);
 DROP FUNCTION IF EXISTS match_document_chunks(vector(768), float, int);
 
--- 3. Clear all old chunks (old 768-dim vectors are incompatible)
+-- 3. Clear all old chunks
 TRUNCATE TABLE public.document_chunks;
 
--- 4. Alter column to new dimension
+-- 4. Ensure column is vector(768)
 ALTER TABLE public.document_chunks
-  ALTER COLUMN embedding TYPE vector(3072);
+  ALTER COLUMN embedding TYPE vector(768);
 
--- 5. Recreate IVFFlat index for 3072 dims
+-- 5. Recreate IVFFlat index for 768 dims
 CREATE INDEX idx_document_chunks_embedding
   ON public.document_chunks USING ivfflat (embedding vector_cosine_ops)
   WITH (lists = 50);
 
--- 6. Recreate search function with new dimension
+-- 6. Recreate search function with 768 dims
 CREATE OR REPLACE FUNCTION match_document_chunks(
-  query_embedding vector(3072),
+  query_embedding vector(768),
   match_threshold FLOAT DEFAULT 0.4,
   match_count INT DEFAULT 6
 )

@@ -7,12 +7,12 @@
 -- 1. Enable pgvector
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 2. document_chunks table (Gemini gemini-embedding-001 = 3072 dims)
+-- 2. document_chunks table (Gemini gemini-embedding-001 with outputDimensionality=768)
 CREATE TABLE IF NOT EXISTS public.document_chunks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   document_id UUID REFERENCES public.documents(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
-  embedding vector(3072),
+  embedding vector(768),
   chunk_index INT DEFAULT 0,
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -43,7 +43,7 @@ CREATE POLICY "Allow authenticated delete chunks"
 
 -- 5. Vector similarity search function
 CREATE OR REPLACE FUNCTION match_document_chunks(
-  query_embedding vector(3072),
+  query_embedding vector(768),
   match_threshold FLOAT DEFAULT 0.4,
   match_count INT DEFAULT 6
 )
