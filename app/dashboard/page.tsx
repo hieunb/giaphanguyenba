@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BarChart2,
   BookOpen,
+  Bot,
   Cake,
   CalendarClock,
   CalendarDays,
@@ -143,6 +144,15 @@ export default async function DashboardLaunchpad() {
       bgColor: "bg-orange-50",
       borderColor: "border-orange-200/60",
       hoverColor: "hover:border-orange-400 hover:shadow-orange-100",
+    },
+    {
+      title: "Hỏi đáp AI Gia phả",
+      description: "Hỏi và tìm kiếm thông tin trong tài liệu dòng họ",
+      icon: <Bot className="size-8 text-violet-600" />,
+      href: "/dashboard/ask",
+      bgColor: "bg-violet-50",
+      borderColor: "border-violet-200/60",
+      hoverColor: "hover:border-violet-400 hover:shadow-violet-100",
     },
   ];
 

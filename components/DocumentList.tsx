@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, ExternalLink, FileText, Image, Video, File } from 'lucide-react';
+import { Trash2, ExternalLink, FileText, Image, Video, File, Brain, Check, Loader2 } from 'lucide-react';
 import { deleteDocument } from '@/app/actions/documents';
+import { useRouter } from 'next/navigation';
 
 const FILE_ICONS: Record<string, any> = {
   pdf: FileText,
@@ -12,13 +13,44 @@ const FILE_ICONS: Record<string, any> = {
 };
 
 export default function DocumentList({ documents }: any) {
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processedIds, setProcessedIds] = useState<Set<string>>(new Set());
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bạn có chắc muốn xóa tài liệu này?')) return;
     setDeletingId(id);
     await deleteDocument(id);
     setDeletingId(null);
+    router.refresh();
+  };
+
+  const handleProcessAI = async (doc: any) => {
+    const ext = doc.file_url?.split('.').pop()?.split('?')[0]?.toLowerCase();
+    if (!['docx', 'txt'].includes(ext || '')) {
+      alert(`Định dạng .${ext} chưa được hỗ trợ.\nHệ thống AI chỉ hỗ trợ .docx và .txt`);
+      return;
+    }
+    setProcessingId(doc.id);
+    try {
+      const res = await fetch('/api/documents/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId: doc.id, fileUrl: doc.file_url, fileName: doc.title || doc.file_url }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        alert('Lỗi xử lý AI: ' + data.error);
+      } else {
+        setProcessedIds(prev => new Set([...prev, doc.id]));
+        alert(`✅ Đã xử lý xong! Tạo ${data.chunksCreated} đoạn văn bản.`);
+      }
+    } catch (e) {
+      alert('Lỗi kết nối: ' + (e as Error).message);
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const getFileIcon = (fileType?: string) => {
@@ -94,11 +126,31 @@ export default function DocumentList({ documents }: any) {
               href={doc.file_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium"
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium mb-2"
             >
               <ExternalLink className="size-4" />
               Xem tài liệu
             </a>
+
+            {/* AI Process button */}
+            <button
+              onClick={() => handleProcessAI(doc)}
+              disabled={processingId === doc.id}
+              className={`flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                processedIds.has(doc.id)
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+              } disabled:opacity-60`}
+            >
+              {processingId === doc.id ? (
+                <><Loader2 className="size-4 animate-spin" /> Đang xử lý AI...</>
+              ) : processedIds.has(doc.id) ? (
+                <><Check className="size-4" /> Đã xử lý AI</>
+              ) : (
+                <><Brain className="size-4" /> Xử lý cho AI
+                </>
+              )}
+            </button>
           </div>
         );
       })}

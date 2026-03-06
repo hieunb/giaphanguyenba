@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Info, Network, ScrollText, UserCircle } from "lucide-react";
+import { Bot, ChevronDown, Info, Network, ScrollText, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
@@ -77,6 +77,15 @@ export default function HeaderMenu() {
               >
                 <ScrollText className="size-4" />
                 Gia phả ký
+              </Link>
+
+              <Link
+                href="/dashboard/ask"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-stone-700 hover:text-violet-700 hover:bg-violet-50 transition-colors"
+              >
+                <Bot className="size-4" />
+                Hỏi đáp AI
               </Link>
 
               <Link
