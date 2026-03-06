@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, X } from 'lucide-react';
 import { createFundTransaction } from '@/app/actions/funds';
 
 export default function FundTransactionForm({ funds, members }: any) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -20,6 +22,7 @@ export default function FundTransactionForm({ funds, members }: any) {
     } else {
       setIsOpen(false);
       e.currentTarget.reset();
+      router.refresh();
     }
 
     setIsSubmitting(false);

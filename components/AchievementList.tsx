@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Star, Trash2, ExternalLink } from 'lucide-react';
 import { deleteAchievement, toggleFeatured } from '@/app/actions/achievements';
 
@@ -14,6 +15,7 @@ const ACHIEVEMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function AchievementList({ achievements, members }: any) {
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -27,10 +29,12 @@ export default function AchievementList({ achievements, members }: any) {
     }
 
     setDeletingId(null);
+    router.refresh();
   };
 
   const handleToggleFeatured = async (id: string, currentStatus: boolean) => {
     await toggleFeatured(id, !currentStatus);
+    router.refresh();
   };
 
   if (!achievements || achievements.length === 0) {

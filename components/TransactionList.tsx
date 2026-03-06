@@ -3,6 +3,7 @@
 import { Trash2, ExternalLink } from 'lucide-react';
 import { deleteFundTransaction } from '@/app/actions/funds';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const TYPE_LABELS: Record<string, string> = {
   donation: '💰 Đóng góp',
@@ -12,6 +13,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function TransactionList({ transactions }: any) {
+  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -19,6 +21,7 @@ export default function TransactionList({ transactions }: any) {
     setDeletingId(id);
     await deleteFundTransaction(id);
     setDeletingId(null);
+    router.refresh();
   };
 
   if (!transactions || transactions.length === 0) {
