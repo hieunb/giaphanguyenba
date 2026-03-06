@@ -82,3 +82,94 @@ select {
   pointer-events: none;
   height: 0;
 }
+
+/* ── TipTap Table styles (editor) ─────────────────────────────────── */
+.tiptap-editor-wrapper .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75rem 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.tiptap-editor-wrapper .ProseMirror table th,
+.tiptap-editor-wrapper .ProseMirror table td {
+  border: 1px solid #d6d3d1;
+  padding: 0.4rem 0.6rem;
+  vertical-align: top;
+  min-width: 60px;
+  position: relative;
+}
+.tiptap-editor-wrapper .ProseMirror table th {
+  background: #fef3c7;
+  font-weight: 600;
+  text-align: left;
+}
+.tiptap-editor-wrapper .ProseMirror table .selectedCell::after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  inset: 0;
+  background: rgba(251, 191, 36, 0.15);
+  pointer-events: none;
+}
+.tiptap-editor-wrapper .ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #fb923c;
+  pointer-events: none;
+}
+
+/* ── Chronicle content view ──────────────────────────────────────── */
+/* Styles for dangerouslySetInnerHTML rendered TipTap HTML */
+.chronicle-content { line-height: 1.8; color: #1c1917; }
+.chronicle-content h1 { font-size: 1.75rem; font-weight: 700; margin: 1.2rem 0 0.6rem; color: #292524; }
+.chronicle-content h2 { font-size: 1.4rem; font-weight: 700; margin: 1rem 0 0.5rem; color: #292524; }
+.chronicle-content h3 { font-size: 1.15rem; font-weight: 600; margin: 0.8rem 0 0.4rem; color: #292524; }
+.chronicle-content p { margin-bottom: 0.75rem; }
+.chronicle-content strong { font-weight: 700; }
+.chronicle-content em { font-style: italic; }
+.chronicle-content u { text-decoration: underline; }
+.chronicle-content s { text-decoration: line-through; }
+.chronicle-content ul {
+  list-style-type: disc;
+  padding-left: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+.chronicle-content ol {
+  list-style-type: decimal;
+  padding-left: 1.6rem;
+  margin-bottom: 0.75rem;
+}
+.chronicle-content li { margin-bottom: 0.25rem; }
+.chronicle-content ul li { list-style-type: disc; }
+.chronicle-content ol li { list-style-type: decimal; }
+.chronicle-content blockquote {
+  border-left: 3px solid #d97706;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #57534e;
+  font-style: italic;
+}
+.chronicle-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+.chronicle-content table th,
+.chronicle-content table td {
+  border: 1px solid #d6d3d1;
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+.chronicle-content table th {
+  background: #fef3c7;
+  font-weight: 600;
+}
+.chronicle-content table tr:nth-child(even) td {
+  background: #fafaf9;
+}

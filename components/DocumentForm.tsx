@@ -68,6 +68,7 @@ export default function DocumentForm({ categories }: any) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget; // Save ref before async operations (currentTarget becomes null after await)
     setIsSubmitting(true);
 
     try {
@@ -101,7 +102,7 @@ export default function DocumentForm({ categories }: any) {
         setIsOpen(false);
         setSelectedFile(null);
         setUploadProgress(0);
-        e.currentTarget.reset();
+        form.reset();
         router.refresh();
       }
     } catch (error) {
@@ -114,14 +115,15 @@ export default function DocumentForm({ categories }: any) {
 
   const handleCategorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const catForm = e.currentTarget;
+    const formData = new FormData(catForm);
     const result = await createCategory(formData);
 
     if (result.error) {
       alert('Lỗi: ' + result.error);
     } else {
       setShowCategoryForm(false);
-      e.currentTarget.reset();
+      catForm.reset();
     }
   };
 
