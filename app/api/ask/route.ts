@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
+async function getEmbedding(text: string, geminiKey: string): Promise<number[]> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,6 +23,38 @@ async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
   }
   const data = await res.json();
   return data.embedding.values as number[];
+}
+
+async function groqChat(systemPrompt: string, userMessage: string, groqKey: string): Promise<string> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${groqKey}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.3,
+      max_tokens: 1024,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const retryAfter = res.headers.get('retry-after');
+    if (res.status === 429) {
+      const secs = retryAfter ? parseInt(retryAfter) : 60;
+      throw new Error(`RATE_LIMIT:${secs}`);
+    }
+    throw new Error(`Groq error ${res.status}: ${err?.error?.message || res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.choices[0]?.message?.content ?? '';
 }
 
 const SYSTEM_PROMPT = `Bạn là trợ lý AI chuyên về gia phả và lịch sử dòng họ.
@@ -48,6 +79,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Chưa cấu hình GEMINI_API_KEY' }, { status: 500 });
     }
 
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) {
+      return NextResponse.json({ error: 'Chưa cấu hình GROQ_API_KEY' }, { status: 500 });
+    }
+
     // Create Supabase client
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -60,9 +96,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 });
 
-    const genAI = new GoogleGenerativeAI(geminiKey);
-
-    // 1. Embed the question (direct REST)
+    // 1. Embed the question with Gemini (direct REST)
     const embValues = await getEmbedding(question, geminiKey);
 
     // 2. Vector search in Supabase
@@ -99,23 +133,22 @@ export async function POST(req: NextRequest) {
       .map((c: any, i: number) => `[Đoạn ${i + 1} — ${docMap[c.document_id] || 'Tài liệu'}]\n${c.content}`)
       .join('\n\n---\n\n');
 
-    // 5. Generate answer with Gemini Flash 1.5 (1500 RPD free tier)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const prompt = `${SYSTEM_PROMPT}\n\n=== CÁC ĐOẠN VĂN BẢN TỪ TÀI LIỆU ===\n\n${context}\n\n=== CÂU HỎI ===\n${question}`;
+    // 5. Generate answer with Groq (14,400 RPD free tier)
+    const userMessage = `=== CÁC ĐOẠN VĂN BẢN TỪ TÀI LIỆU ===\n\n${context}\n\n=== CÂU HỎI ===\n${question}`;
 
-    let result;
+    let answer: string;
     try {
-      result = await model.generateContent(prompt);
+      answer = await groqChat(SYSTEM_PROMPT, userMessage, groqKey);
     } catch (genErr: any) {
-      // Parse 429 retry-after from error message
-      const retryMatch = genErr?.message?.match(/Please retry in ([\d.]+)s/);
-      const waitSecs = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
-      return NextResponse.json(
-        { error: `Hệ thống AI đang bận, vui lòng thử lại sau ${waitSecs} giây.` },
-        { status: 429 }
-      );
+      if (genErr?.message?.startsWith('RATE_LIMIT:')) {
+        const secs = genErr.message.split(':')[1];
+        return NextResponse.json(
+          { error: `Hệ thống AI đang bận, vui lòng thử lại sau ${secs} giây.` },
+          { status: 429 }
+        );
+      }
+      throw genErr;
     }
-    const answer = result.response.text();
 
     // 6. Build unique source list
     const sources = docIds.map(id => ({ id, title: docMap[id] || 'Tài liệu' }));
