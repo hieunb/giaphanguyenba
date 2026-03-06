@@ -21,8 +21,11 @@ export default function DocumentList({ documents }: any) {
   const handleDelete = async (id: string) => {
     if (!confirm('Bạn có chắc muốn xóa tài liệu này?')) return;
     setDeletingId(id);
-    await deleteDocument(id);
+    const result = await deleteDocument(id);
     setDeletingId(null);
+    if (result?.error) {
+      alert('Lỗi xóa tài liệu: ' + result.error);
+    }
     router.refresh();
   };
 
@@ -37,7 +40,12 @@ export default function DocumentList({ documents }: any) {
       const res = await fetch('/api/documents/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId: doc.id, fileUrl: doc.file_url, fileName: doc.title || doc.file_url }),
+        body: JSON.stringify({
+        documentId: doc.id,
+        fileUrl: doc.file_url,
+        // Extract actual filename with extension from URL (not the display title)
+        fileName: doc.file_url?.split('/').pop()?.split('?')[0] || doc.file_url,
+      }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {

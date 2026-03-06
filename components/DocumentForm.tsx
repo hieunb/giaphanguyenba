@@ -15,6 +15,7 @@ export default function DocumentForm({ categories }: any) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [titleValue, setTitleValue] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -27,6 +28,8 @@ export default function DocumentForm({ categories }: any) {
         return;
       }
       setSelectedFile(file);
+      // Auto-fill title with original filename if title is empty
+      if (!titleValue) setTitleValue(file.name);
     }
   };
 
@@ -104,6 +107,7 @@ export default function DocumentForm({ categories }: any) {
         setIsOpen(false);
         setSelectedFile(null);
         setUploadProgress(0);
+        setTitleValue('');
         form.reset();
         router.refresh();
         setSuccessMsg(`✅ Đã thêm tài liệu "${title}" thành công!`);
@@ -167,7 +171,9 @@ export default function DocumentForm({ categories }: any) {
               type="text"
               name="title"
               required
-              placeholder="VD: Gia phả họ Nguyễn Bá"
+              value={titleValue}
+              onChange={e => setTitleValue(e.target.value)}
+              placeholder="VD: Gia phả họ Nguyễn Bá (tự điền khi chọn file)"
               className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
