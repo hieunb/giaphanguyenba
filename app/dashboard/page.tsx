@@ -14,6 +14,7 @@ import {
   GitMerge,
   Network,
   PiggyBank,
+  ScrollText,
   Settings,
   Star,
   Trophy,
@@ -134,6 +135,15 @@ export default async function DashboardLaunchpad() {
       hoverColor: "hover:border-indigo-400 hover:shadow-indigo-100",
       badge: "Sắp ra mắt",
     },
+    {
+      title: "Gia phả ký",
+      description: "Bài viết ghi chép lịch sử và câu chuyện dòng họ",
+      icon: <ScrollText className="size-8 text-orange-600" />,
+      href: "/dashboard/chronicles",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200/60",
+      hoverColor: "hover:border-orange-400 hover:shadow-orange-100",
+    },
   ];
 
   const adminFeatures = [
@@ -202,6 +212,16 @@ export default async function DashboardLaunchpad() {
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200/60",
       hoverColor: "hover:border-purple-400 hover:shadow-purple-100",
+      badge: "Mới",
+    },
+    {
+      title: "Quản lý Gia phả ký",
+      description: "Viết và quản lý bài viết gia phả ký",
+      icon: <ScrollText className="size-8 text-orange-600" />,
+      href: "/dashboard/admin/chronicles",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200/60",
+      hoverColor: "hover:border-orange-400 hover:shadow-orange-100",
       badge: "Mới",
     },
   ];
