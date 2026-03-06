@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, Upload, Link as LinkIcon } from 'lucide-react';
+import { Plus, X, Upload, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
 import { createDocument, createCategory } from '@/app/actions/documents';
 import { createClient } from '@/utils/supabase/client';
 
@@ -14,6 +14,7 @@ export default function DocumentForm({ categories }: any) {
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -99,11 +100,14 @@ export default function DocumentForm({ categories }: any) {
       if (result.error) {
         alert('Lỗi: ' + result.error);
       } else {
+        const title = formData.get('title') as string;
         setIsOpen(false);
         setSelectedFile(null);
         setUploadProgress(0);
         form.reset();
         router.refresh();
+        setSuccessMsg(`✅ Đã thêm tài liệu "${title}" thành công!`);
+        setTimeout(() => setSuccessMsg(null), 4000);
       }
     } catch (error) {
       console.error('Submit error:', error);
@@ -128,13 +132,21 @@ export default function DocumentForm({ categories }: any) {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
-      >
-        <Plus className="size-5" />
-        Thêm tài liệu
-      </button>
+      <>
+        {successMsg && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-green-600 text-white px-5 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-4">
+            <CheckCircle2 className="size-5 shrink-0" />
+            <span className="text-sm font-medium">{successMsg}</span>
+          </div>
+        )}
+        <button
+          onClick={() => setIsOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          <Plus className="size-5" />
+          Thêm tài liệu
+        </button>
+      </>
     );
   }
 

@@ -43,7 +43,10 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(geminiKey);
 
     // 1. Embed the question
-    const embModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const embModel = genAI.getGenerativeModel(
+      { model: 'text-embedding-004' },
+      { apiVersion: 'v1' }
+    );
     const { embedding } = await embModel.embedContent(question);
 
     // 2. Vector search in Supabase

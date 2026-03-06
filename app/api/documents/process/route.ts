@@ -79,7 +79,10 @@ export async function POST(req: NextRequest) {
 
     // Generate embeddings with Gemini
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const embModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const embModel = genAI.getGenerativeModel(
+      { model: 'text-embedding-004' },
+      { apiVersion: 'v1' }
+    );
 
     const rows: Array<{ document_id: string; content: string; embedding: number[]; chunk_index: number }> = [];
 

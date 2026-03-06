@@ -50,8 +50,7 @@ export async function getDocuments(categoryId?: string) {
     .from('documents')
     .select(`
       *,
-      category:document_categories(id, name, icon),
-      uploader:profiles(id, email)
+      category:document_categories(id, name, icon)
     `)
     .order('created_at', { ascending: false });
 
