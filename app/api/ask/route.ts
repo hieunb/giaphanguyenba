@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Fetch document titles for sources
-    const docIds: string[] = [...new Set(chunks.map((c: any) => c.document_id))];
+    const docIds: string[] = Array.from(new Set<string>(chunks.map((c: any) => c.document_id as string)));
     const { data: docs } = await supabase
       .from('documents')
       .select('id, title')
