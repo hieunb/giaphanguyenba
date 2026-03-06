@@ -26,8 +26,7 @@ export async function getAchievements() {
     .from('achievements')
     .select(`
       *,
-      member:persons(id, full_name),
-      verifier:profiles(id, email)
+      member:persons(id, full_name)
     `)
     .order('created_at', { ascending: false });
 

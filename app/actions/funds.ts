@@ -48,8 +48,7 @@ export async function getFundTransactions(fundId?: string) {
     .select(`
       *,
       fund:funds(id, name),
-      member:persons(id, full_name),
-      recorder:profiles(id, email)
+      member:persons(id, full_name)
     `)
     .order('transaction_date', { ascending: false });
 
