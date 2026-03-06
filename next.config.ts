@@ -1,12 +1,13 @@
 import type { NextConfig } from "next";
 
+// Use standalone output for Docker, default for Vercel
+const isVercel = !!process.env.VERCEL;
+
 const nextConfig: NextConfig = {
-  // Enable standalone output for Docker
-  output: "standalone",
-  
-  // Other config options
+  output: isVercel ? undefined : "standalone",
+
   reactStrictMode: true,
-  
+
   typescript: {
     ignoreBuildErrors: false,
   },
