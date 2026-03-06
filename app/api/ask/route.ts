@@ -99,11 +99,22 @@ export async function POST(req: NextRequest) {
       .map((c: any, i: number) => `[Đoạn ${i + 1} — ${docMap[c.document_id] || 'Tài liệu'}]\n${c.content}`)
       .join('\n\n---\n\n');
 
-    // 5. Generate answer with Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    // 5. Generate answer with Gemini Flash 1.5 (1500 RPD free tier)
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = `${SYSTEM_PROMPT}\n\n=== CÁC ĐOẠN VĂN BẢN TỪ TÀI LIỆU ===\n\n${context}\n\n=== CÂU HỎI ===\n${question}`;
 
-    const result = await model.generateContent(prompt);
+    let result;
+    try {
+      result = await model.generateContent(prompt);
+    } catch (genErr: any) {
+      // Parse 429 retry-after from error message
+      const retryMatch = genErr?.message?.match(/Please retry in ([\d.]+)s/);
+      const waitSecs = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
+      return NextResponse.json(
+        { error: `Hệ thống AI đang bận, vui lòng thử lại sau ${waitSecs} giây.` },
+        { status: 429 }
+      );
+    }
     const answer = result.response.text();
 
     // 6. Build unique source list
