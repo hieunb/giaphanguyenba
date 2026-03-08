@@ -66,9 +66,9 @@ export default function MemberForm({
   );
   // Calendar type + lunar input states
   const [birthCalendar, setBirthCalendar] = useState<"solar" | "lunar">("solar");
-  const [birthLunarYear, setBirthLunarYear] = useState<number | ">("");
-  const [birthLunarMonth, setBirthLunarMonth] = useState<number | ">("");
-  const [birthLunarDay, setBirthLunarDay] = useState<number | ">("");
+  const [birthLunarYear, setBirthLunarYear] = useState<number | "">("");
+  const [birthLunarMonth, setBirthLunarMonth] = useState<number | "">("");
+  const [birthLunarDay, setBirthLunarDay] = useState<number | "">("");
   // Death date is always lunar calendar
   // Pre-fill lunar fields by converting stored solar death date → lunar when editing
   const _initDeathLunar = solarToLunarParts(
@@ -139,20 +139,27 @@ export default function MemberForm({
       return true;
     };
 
+    // Loose validation for partial lunar input (day max 30, month max 12, year > 0)
+    const isValidPartialLunar = (
+      day: number | "",
+      month: number | "",
+      year: number | "",
+    ) => {
+      if (day !== "" && (day < 1 || day > 30)) return false;
+      if (month !== "" && (month < 1 || month > 12)) return false;
+      if (year !== "" && year < 1) return false;
+      return true;
+    };
+
     // Resolve final solar birth date (convert from lunar if needed)
     let finalBirthYear: number | "" = birthYear;
     let finalBirthMonth: number | "" = birthMonth;
     let finalBirthDay: number | "" = birthDay;
 
     if (birthCalendar === "lunar") {
-      const hasAny = birthLunarYear !== "" || birthLunarMonth !== "" || birthLunarDay !== "";
       const hasAll = birthLunarYear !== "" && birthLunarMonth !== "" && birthLunarDay !== "";
-      if (hasAny && !hasAll) {
-        setError("Vui lòng nhập đủ ngày, tháng, năm âm lịch cho ngày sinh.");
-        setLoading(false);
-        return;
-      }
       if (hasAll) {
+        // All 3 fields filled → convert precisely to solar
         const converted = lunarToSolar(Number(birthLunarYear), Number(birthLunarMonth), Number(birthLunarDay));
         if (!converted) {
           setError("Ngày sinh âm lịch không hợp lệ.");
@@ -163,9 +170,10 @@ export default function MemberForm({
         finalBirthMonth = converted.month;
         finalBirthDay = converted.day;
       } else {
-        finalBirthYear = "";
-        finalBirthMonth = "";
-        finalBirthDay = "";
+        // Partial or empty: save whatever fields are filled as-is
+        finalBirthYear = birthLunarYear;
+        finalBirthMonth = birthLunarMonth;
+        finalBirthDay = birthLunarDay;
       }
     }
 
@@ -175,14 +183,9 @@ export default function MemberForm({
     let finalDeathDay: number | "" = deathDay;
 
     if (isDeceased) {
-      const hasAny = deathLunarYear !== "" || deathLunarMonth !== "" || deathLunarDay !== "";
       const hasAll = deathLunarYear !== "" && deathLunarMonth !== "" && deathLunarDay !== "";
-      if (hasAny && !hasAll) {
-        setError("Vui lòng nhập đủ ngày, tháng, năm âm lịch cho ngày mất.");
-        setLoading(false);
-        return;
-      }
       if (hasAll) {
+        // All 3 fields filled → convert precisely to solar
         const converted = lunarToSolar(Number(deathLunarYear), Number(deathLunarMonth), Number(deathLunarDay));
         if (!converted) {
           setError("Ngày mất âm lịch không hợp lệ.");
@@ -193,9 +196,10 @@ export default function MemberForm({
         finalDeathMonth = converted.month;
         finalDeathDay = converted.day;
       } else {
-        finalDeathYear = "";
-        finalDeathMonth = "";
-        finalDeathDay = "";
+        // Partial or empty: save whatever fields are filled as-is
+        finalDeathYear = deathLunarYear;
+        finalDeathMonth = deathLunarMonth;
+        finalDeathDay = deathLunarDay;
       }
     }
 
@@ -205,8 +209,8 @@ export default function MemberForm({
       return;
     }
 
-    if (isDeceased && !isValidDate(finalDeathDay, finalDeathMonth, finalDeathYear)) {
-      setError("Ngày mất không hợp lệ. Vui lòng kiểm tra lại.");
+    if (isDeceased && !isValidPartialLunar(finalDeathDay, finalDeathMonth, finalDeathYear)) {
+      setError("Ngày mất không hợp lệ (ngày max 30, tháng max 12, năm > 0).");
       setLoading(false);
       return;
     }
