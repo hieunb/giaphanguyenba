@@ -9,6 +9,7 @@ import {
   getLunarDateString,
   getZodiacSign,
   getZodiacAnimal,
+  solarToLunarParts,
 } from "@/utils/dateHelpers";
 import { motion, Variants } from "framer-motion";
 import {
@@ -239,25 +240,24 @@ export default function MemberDetailContent({
                     </h3>
                   </div>
                   <div className="space-y-1.5 pl-4 border-l-2 border-stone-100">
+                    {/* Primary: lunar date (what was entered) */}
                     <p className="text-stone-800 font-semibold text-sm sm:text-base">
-                      {formatDisplayDate(
-                        person.death_year,
-                        person.death_month,
-                        person.death_day,
-                      )}
+                      {(() => {
+                        const lunar = solarToLunarParts(person.death_year, person.death_month, person.death_day);
+                        if (lunar) {
+                          return `${lunar.day.toString().padStart(2, '0')}/${lunar.month.toString().padStart(2, '0')}/${lunar.year} (âm lịch)`;
+                        }
+                        // Partial: only year known
+                        return formatDisplayDate(person.death_year, null, null);
+                      })()}
                     </p>
-                    {(person.death_year ||
-                      person.death_month ||
-                      person.death_day) && (
+                    {/* Secondary: solar equivalent */}
+                    {(person.death_year || person.death_month || person.death_day) && (
                       <p className="text-xs font-medium text-stone-500 flex items-center gap-1.5">
                         <span className="text-[10px] border border-stone-200/60 bg-stone-50/80 rounded px-1.5 py-0.5">
-                          Âm lịch
+                          Dương lịch
                         </span>
-                        {getLunarDateString(
-                          person.death_year,
-                          person.death_month,
-                          person.death_day,
-                        ) || "Chưa rõ"}
+                        {formatDisplayDate(person.death_year, person.death_month, person.death_day)}
                       </p>
                     )}
                   </div>

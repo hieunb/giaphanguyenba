@@ -1,4 +1,4 @@
-import { Solar } from "lunar-javascript";
+import { Solar, Lunar } from "lunar-javascript";
 
 export function formatDisplayDate(
   year: number | null,
@@ -161,6 +161,33 @@ function ganZhiToVietnamese(ganZhi: string): string {
 /**
  * Get today's solar and lunar date info for display.
  */
+export function solarToLunarParts(
+  year: number | null | undefined,
+  month: number | null | undefined,
+  day: number | null | undefined,
+): { year: number; month: number; day: number } | null {
+  if (!year || !month || !day) return null;
+  try {
+    const lunar = Solar.fromYmd(year, month, day).getLunar();
+    return { year: lunar.getYear(), month: Math.abs(lunar.getMonth()), day: lunar.getDay() };
+  } catch {
+    return null;
+  }
+}
+
+export function lunarToSolar(
+  year: number,
+  month: number,
+  day: number,
+): { year: number; month: number; day: number } | null {
+  try {
+    const solar = Lunar.fromYmd(year, month, day).getSolar();
+    return { year: solar.getYear(), month: solar.getMonth(), day: solar.getDay() };
+  } catch {
+    return null;
+  }
+}
+
 export function getTodayLunar() {
   const now = new Date();
   const solar = Solar.fromYmd(

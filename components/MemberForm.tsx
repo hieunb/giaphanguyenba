@@ -2,6 +2,7 @@
 
 import { Gender, Person } from "@/types";
 import { createClient } from "@/utils/supabase/client";
+import { lunarToSolar, solarToLunarParts } from "@/utils/dateHelpers";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import {
   AlertCircle,
@@ -63,7 +64,27 @@ export default function MemberForm({
   const [deathDay, setDeathDay] = useState<number | "">(
     initialData?.death_day || "",
   );
-
+  // Calendar type + lunar input states
+  const [birthCalendar, setBirthCalendar] = useState<"solar" | "lunar">("solar");
+  const [birthLunarYear, setBirthLunarYear] = useState<number | ">("");
+  const [birthLunarMonth, setBirthLunarMonth] = useState<number | ">("");
+  const [birthLunarDay, setBirthLunarDay] = useState<number | ">("");
+  // Death date is always lunar calendar
+  // Pre-fill lunar fields by converting stored solar death date → lunar when editing
+  const _initDeathLunar = solarToLunarParts(
+    initialData?.death_year,
+    initialData?.death_month,
+    initialData?.death_day,
+  );
+  const [deathLunarYear, setDeathLunarYear] = useState<number | "">(
+    _initDeathLunar?.year ?? "",
+  );
+  const [deathLunarMonth, setDeathLunarMonth] = useState<number | "">(
+    _initDeathLunar?.month ?? "",
+  );
+  const [deathLunarDay, setDeathLunarDay] = useState<number | "">(
+    _initDeathLunar?.day ?? "",
+  );
   const [isDeceased, setIsDeceased] = useState<boolean>(
     initialData?.is_deceased || false,
   );
@@ -118,13 +139,73 @@ export default function MemberForm({
       return true;
     };
 
-    if (!isValidDate(birthDay, birthMonth, birthYear)) {
+    // Resolve final solar birth date (convert from lunar if needed)
+    let finalBirthYear: number | "" = birthYear;
+    let finalBirthMonth: number | "" = birthMonth;
+    let finalBirthDay: number | "" = birthDay;
+
+    if (birthCalendar === "lunar") {
+      const hasAny = birthLunarYear !== "" || birthLunarMonth !== "" || birthLunarDay !== "";
+      const hasAll = birthLunarYear !== "" && birthLunarMonth !== "" && birthLunarDay !== "";
+      if (hasAny && !hasAll) {
+        setError("Vui lòng nhập đủ ngày, tháng, năm âm lịch cho ngày sinh.");
+        setLoading(false);
+        return;
+      }
+      if (hasAll) {
+        const converted = lunarToSolar(Number(birthLunarYear), Number(birthLunarMonth), Number(birthLunarDay));
+        if (!converted) {
+          setError("Ngày sinh âm lịch không hợp lệ.");
+          setLoading(false);
+          return;
+        }
+        finalBirthYear = converted.year;
+        finalBirthMonth = converted.month;
+        finalBirthDay = converted.day;
+      } else {
+        finalBirthYear = "";
+        finalBirthMonth = "";
+        finalBirthDay = "";
+      }
+    }
+
+    // Resolve final solar death date (convert from lunar if needed)
+    let finalDeathYear: number | "" = deathYear;
+    let finalDeathMonth: number | "" = deathMonth;
+    let finalDeathDay: number | "" = deathDay;
+
+    if (isDeceased) {
+      const hasAny = deathLunarYear !== "" || deathLunarMonth !== "" || deathLunarDay !== "";
+      const hasAll = deathLunarYear !== "" && deathLunarMonth !== "" && deathLunarDay !== "";
+      if (hasAny && !hasAll) {
+        setError("Vui lòng nhập đủ ngày, tháng, năm âm lịch cho ngày mất.");
+        setLoading(false);
+        return;
+      }
+      if (hasAll) {
+        const converted = lunarToSolar(Number(deathLunarYear), Number(deathLunarMonth), Number(deathLunarDay));
+        if (!converted) {
+          setError("Ngày mất âm lịch không hợp lệ.");
+          setLoading(false);
+          return;
+        }
+        finalDeathYear = converted.year;
+        finalDeathMonth = converted.month;
+        finalDeathDay = converted.day;
+      } else {
+        finalDeathYear = "";
+        finalDeathMonth = "";
+        finalDeathDay = "";
+      }
+    }
+
+    if (!isValidDate(finalBirthDay, finalBirthMonth, finalBirthYear)) {
       setError("Ngày sinh không hợp lệ. Vui lòng kiểm tra lại.");
       setLoading(false);
       return;
     }
 
-    if (isDeceased && !isValidDate(deathDay, deathMonth, deathYear)) {
+    if (isDeceased && !isValidDate(finalDeathDay, finalDeathMonth, finalDeathYear)) {
       setError("Ngày mất không hợp lệ. Vui lòng kiểm tra lại.");
       setLoading(false);
       return;
@@ -132,9 +213,9 @@ export default function MemberForm({
 
     if (
       isDeceased &&
-      birthYear !== "" &&
-      deathYear !== "" &&
-      deathYear < birthYear
+      finalBirthYear !== "" &&
+      finalDeathYear !== "" &&
+      finalDeathYear < finalBirthYear
     ) {
       setError("Năm mất phải lớn hơn hoặc bằng năm sinh.");
       setLoading(false);
@@ -167,13 +248,12 @@ export default function MemberForm({
       const personData = {
         full_name: fullName,
         gender,
-        birth_year: birthYear === "" ? null : Number(birthYear),
-        birth_month: birthMonth === "" ? null : Number(birthMonth),
-        birth_day: birthDay === "" ? null : Number(birthDay),
-        death_year: isDeceased && deathYear !== "" ? Number(deathYear) : null,
-        death_month:
-          isDeceased && deathMonth !== "" ? Number(deathMonth) : null,
-        death_day: isDeceased && deathDay !== "" ? Number(deathDay) : null,
+        birth_year: finalBirthYear === "" ? null : Number(finalBirthYear),
+        birth_month: finalBirthMonth === "" ? null : Number(finalBirthMonth),
+        birth_day: finalBirthDay === "" ? null : Number(finalBirthDay),
+        death_year: isDeceased && finalDeathYear !== "" ? Number(finalDeathYear) : null,
+        death_month: isDeceased && finalDeathMonth !== "" ? Number(finalDeathMonth) : null,
+        death_day: isDeceased && finalDeathDay !== "" ? Number(finalDeathDay) : null,
         is_deceased: isDeceased,
         is_in_law: isInLaw,
         birth_order: birthOrder === "" ? null : Number(birthOrder),
@@ -223,8 +303,9 @@ export default function MemberForm({
       if (onSuccess) {
         onSuccess(personId);
       } else {
-        router.push("/dashboard/members/" + personId);
+        // Refresh cache first so the detail page renders fresh data after navigation
         router.refresh();
+        router.push("/dashboard/members/" + personId);
       }
     } catch (err) {
       console.error("Error saving member:", err);
@@ -479,42 +560,117 @@ export default function MemberForm({
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-semibold text-stone-700 mb-1.5">
-              Ngày sinh dương lịch
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              <input
-                type="number"
-                placeholder="Ngày"
-                min="1"
-                max="31"
-                value={birthDay}
-                onChange={(e) =>
-                  setBirthDay(e.target.value ? Number(e.target.value) : "")
-                }
-                className={inputClasses}
-              />
-              <input
-                type="number"
-                placeholder="Tháng"
-                min="1"
-                max="12"
-                value={birthMonth}
-                onChange={(e) =>
-                  setBirthMonth(e.target.value ? Number(e.target.value) : "")
-                }
-                className={inputClasses}
-              />
-              <input
-                type="number"
-                placeholder="Năm"
-                value={birthYear}
-                onChange={(e) =>
-                  setBirthYear(e.target.value ? Number(e.target.value) : "")
-                }
-                className={inputClasses}
-              />
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-stone-700">
+                Ngày sinh
+              </label>
+              <div className="flex items-center gap-0.5 p-0.5 bg-stone-100 rounded-lg text-xs border border-stone-200">
+                <button
+                  type="button"
+                  onClick={() => setBirthCalendar("solar")}
+                  className={`px-2.5 py-1 rounded-md transition-all font-medium ${birthCalendar === "solar" ? "bg-white text-amber-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                >
+                  Dương lịch
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBirthCalendar("lunar")}
+                  className={`px-2.5 py-1 rounded-md transition-all font-medium ${birthCalendar === "lunar" ? "bg-white text-amber-700 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                >
+                  Âm lịch
+                </button>
+              </div>
             </div>
+            {birthCalendar === "solar" ? (
+              <div className="grid grid-cols-3 gap-3">
+                <input
+                  type="number"
+                  placeholder="Ngày"
+                  min="1"
+                  max="31"
+                  value={birthDay}
+                  onChange={(e) =>
+                    setBirthDay(e.target.value ? Number(e.target.value) : "")
+                  }
+                  className={inputClasses}
+                />
+                <input
+                  type="number"
+                  placeholder="Tháng"
+                  min="1"
+                  max="12"
+                  value={birthMonth}
+                  onChange={(e) =>
+                    setBirthMonth(e.target.value ? Number(e.target.value) : "")
+                  }
+                  className={inputClasses}
+                />
+                <input
+                  type="number"
+                  placeholder="Năm"
+                  value={birthYear}
+                  onChange={(e) =>
+                    setBirthYear(e.target.value ? Number(e.target.value) : "")
+                  }
+                  className={inputClasses}
+                />
+              </div>
+            ) : (
+              <div>
+                <div className="grid grid-cols-3 gap-3">
+                  <input
+                    type="number"
+                    placeholder="Ngày ÂL"
+                    min="1"
+                    max="30"
+                    value={birthLunarDay}
+                    onChange={(e) =>
+                      setBirthLunarDay(e.target.value ? Number(e.target.value) : "")
+                    }
+                    className={inputClasses}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Tháng ÂL"
+                    min="1"
+                    max="12"
+                    value={birthLunarMonth}
+                    onChange={(e) =>
+                      setBirthLunarMonth(e.target.value ? Number(e.target.value) : "")
+                    }
+                    className={inputClasses}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Năm ÂL"
+                    value={birthLunarYear}
+                    onChange={(e) =>
+                      setBirthLunarYear(e.target.value ? Number(e.target.value) : "")
+                    }
+                    className={inputClasses}
+                  />
+                </div>
+                {birthLunarDay !== "" && birthLunarMonth !== "" && birthLunarYear !== "" &&
+                  (() => {
+                    const converted = lunarToSolar(Number(birthLunarYear), Number(birthLunarMonth), Number(birthLunarDay));
+                    return converted ? (
+                      <p className="mt-1.5 text-xs text-stone-500 flex items-center gap-1">
+                        <span>🗓️</span> Tương đương dương lịch:{" "}
+                        <span className="font-medium text-stone-700">
+                          {converted.day.toString().padStart(2, "0")}/
+                          {converted.month.toString().padStart(2, "0")}/
+                          {converted.year}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-rose-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> Ngày âm lịch không hợp lệ
+                      </p>
+                    );
+                  })()
+                }
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2 bg-stone-50/50 p-5 rounded-2xl border border-stone-200/60 shadow-xs">
@@ -569,47 +725,67 @@ export default function MemberForm({
                   exit={{ opacity: 0, height: 0, marginTop: 0 }}
                   className="overflow-hidden"
                 >
-                  <label className="block text-sm font-semibold text-stone-700 mb-1.5">
-                    Ngày mất
-                  </label>
-                  <div className="grid grid-cols-3 gap-3 pt-1">
-                    <input
-                      type="number"
-                      placeholder="Ngày"
-                      min="1"
-                      max="31"
-                      value={deathDay}
-                      onChange={(e) =>
-                        setDeathDay(
-                          e.target.value ? Number(e.target.value) : "",
-                        )
-                      }
-                      className={inputClasses}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Tháng"
-                      min="1"
-                      max="12"
-                      value={deathMonth}
-                      onChange={(e) =>
-                        setDeathMonth(
-                          e.target.value ? Number(e.target.value) : "",
-                        )
-                      }
-                      className={inputClasses}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Năm"
-                      value={deathYear}
-                      onChange={(e) =>
-                        setDeathYear(
-                          e.target.value ? Number(e.target.value) : "",
-                        )
-                      }
-                      className={inputClasses}
-                    />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-stone-700">
+                      Ngày mất
+                    </label>
+                    <span className="text-xs font-medium px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg">
+                      Âm lịch
+                    </span>
+                  </div>
+                  <div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <input
+                        type="number"
+                        placeholder="Ngày ÂL"
+                        min="1"
+                        max="30"
+                        value={deathLunarDay}
+                        onChange={(e) =>
+                          setDeathLunarDay(e.target.value ? Number(e.target.value) : "")
+                        }
+                        className={inputClasses}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Tháng ÂL"
+                        min="1"
+                        max="12"
+                        value={deathLunarMonth}
+                        onChange={(e) =>
+                          setDeathLunarMonth(e.target.value ? Number(e.target.value) : "")
+                        }
+                        className={inputClasses}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Năm ÂL"
+                        value={deathLunarYear}
+                        onChange={(e) =>
+                          setDeathLunarYear(e.target.value ? Number(e.target.value) : "")
+                        }
+                        className={inputClasses}
+                      />
+                    </div>
+                    {deathLunarDay !== "" && deathLunarMonth !== "" && deathLunarYear !== "" &&
+                      (() => {
+                        const converted = lunarToSolar(Number(deathLunarYear), Number(deathLunarMonth), Number(deathLunarDay));
+                        return converted ? (
+                          <p className="mt-1.5 text-xs text-stone-500 flex items-center gap-1">
+                            <span>🗓️</span> Tương đương dương lịch:{" "}
+                            <span className="font-medium text-stone-700">
+                              {converted.day.toString().padStart(2, "0")}/
+                              {converted.month.toString().padStart(2, "0")}/
+                              {converted.year}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1.5 text-xs text-rose-500 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> Ngày âm lịch không hợp lệ
+                          </p>
+                        );
+                      })()
+                    }
                   </div>
                 </motion.div>
               )}

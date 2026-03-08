@@ -1,7 +1,7 @@
 "use client";
 
 import { Person } from "@/types";
-import { formatDisplayDate } from "@/utils/dateHelpers";
+import { formatDisplayDate, solarToLunarParts } from "@/utils/dateHelpers";
 import Image from "next/image";
 import { useDashboard } from "./DashboardContext";
 import DefaultAvatar from "./DefaultAvatar";
@@ -88,8 +88,11 @@ export default function PersonCard({ person }: PersonCardProps) {
                 person.birth_month,
                 person.birth_day,
               )}
-              {isDeceased &&
-                ` → ${formatDisplayDate(person.death_year, person.death_month, person.death_day)}`}
+              {isDeceased && (() => {
+                const lunar = solarToLunarParts(person.death_year, person.death_month, person.death_day);
+                if (lunar) return ` → ${lunar.day.toString().padStart(2,'0')}/${lunar.month.toString().padStart(2,'0')}/${lunar.year} (âm lịch)`;
+                return ` → ${formatDisplayDate(person.death_year, null, null)}`;
+              })()}
             </span>
           </p>
           {(isDeceased ||
